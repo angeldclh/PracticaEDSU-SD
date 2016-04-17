@@ -19,19 +19,18 @@ typedef struct listaTemas {
 
 ////////////////////////////////////////////////////////////////////
 
-void imprimir_tema(const tema* tema) {
-	printf("El nombre del tema es %s y hay %d procesos suscriptos \n",
-			tema->nombre, tema->nSuscr);
+void imprimirTema(const tema* tema) {
+	printf("tema.nombre =  %s\ttema.nSuscr = %d \n\n", tema->nombre, tema->nSuscr);
 
 }
 
 
 
-void imprimir_temas(const listaTemas *temas) {
+void imprimirTemas(const listaTemas *temas) {
 	int i = 0;
-	printf("Hay %d temas disponibles \n", temas->nTemas);
+	printf("Número total de temas: %d \n", temas->nTemas);
 	for (i = 0; i < temas->nTemas; i++) {
-		imprimir_tema(temas->temas[i]);
+		imprimirTema(temas->temas[i]);
 	}
 }
 
@@ -39,20 +38,24 @@ void imprimir_temas(const listaTemas *temas) {
 
 //Crear un tema a partir de un string con su nombre 
 tema* crearTema(char *nombre){
+
 	tema *toReturn;
 	//Reservar espacio para la estructura de datos
-	if((toReturn = malloc(sizeof(tema))) == NULL) {
+	if((toReturn = (tema*) malloc(sizeof(tema))) == NULL) {
 		fprintf(stderr, "Error en malloc al crear tema.\n");
 		return NULL;
 	}
 	//Reservar espacio para el nombre del tema
-	if((toReturn->nombre = malloc(strlen(nombre) * sizeof(char))) == NULL){
+	if((toReturn->nombre = (char*) malloc(strlen(nombre) * sizeof(char))) == NULL){
 		fprintf(stderr, "Error en malloc al crear tema.\n");
+		free(toReturn);
 		return NULL;
 	}
 	//Reservar espacio para los suscriptores del tema
-	if((toReturn->suscriptores = malloc(sizeof(struct sockaddr_in*))) == NULL){
+	if((toReturn->suscriptores = (struct sockaddr_in*) malloc(sizeof(struct sockaddr_in*))) == NULL){
 		fprintf(stderr, "Error en malloc al crear tema.\n");
+		free(toReturn);
+		free(toReturn->nombre);
 		return NULL;
 	}
 	//Poner nombre al tema creado
@@ -63,35 +66,37 @@ tema* crearTema(char *nombre){
 	return toReturn;
 }
 
-//Función que añade a una lista de temas los temas de un fichero. PROBAR
-void anyadirTemas(listaTemas *lista, FILE *fichero){
+//Función que añade a una lista de temas los temas de un fichero. 
+int anyadirTemas(listaTemas *lista, FILE *fichero){
 	char *line = NULL;
 	size_t len = 0;
 	ssize_t read;
+	void *tmp;
 
-	//Revisar los realloc
-	while ((read = 	getline(&line, &len, fichero)) != -1) {
-
-		printf("WHILE...\n");
-
-		//Reservar memoria para incluir un nuevo tema en la lista
-		lista->temas = realloc(lista->temas, sizeof(lista->temas) + sizeof(tema*));
+	while ((read = 	getline(&line, &len, fichero)) != -1) {		
+		//Reservar memoria para incluir un nuevo tema en la lista. ESTE REALLOC ESTÁ MAL
+		if((tmp = realloc(lista->temas, (lista->nTemas +1) * sizeof(tema*))) == NULL) {
+			fprintf(stderr, "Imposible reservar memoria para incluir nuevo tema en lista.\n");
+			fclose(fichero);
+			free(line);
+			return 1;
+		}
+		lista->temas = tmp;
 		
-		printf("realloc 1 hecho\n");
-		
-
-		// Cambiar a partir de aquí
-		realloc(lista->temas[lista->nTemas], sizeof(lista->temas[lista->nTemas] + len*sizeof(char)));
-
-		printf("realloc 2 hecho\n");
-
-		strcpy(lista->temas[lista->nTemas]->nombre, line);
-
-		printf("strcpy hecho\n");
-
+		//Crear tema a partir del nombre (línea del fichero) y meterlo en la lista
+		line[strlen(line)-1]=0; //line contiene el \n: quitárselo para el nombre del tema
+		if((lista->temas[lista->nTemas] = crearTema(line)) == NULL) {
+			fprintf(stderr, "Imposible crear tema.\n");
+			fclose(fichero);
+			free(line);
+			return 1;
+		}
 		lista->nTemas++;
+		
 	} 
 	free(line);
+	fclose(fichero);
+	return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -100,21 +105,40 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	//Añadir los temas del fichero a una lista
-	listaTemas *lista = malloc(sizeof(listaTemas));
+	//Crear una lista para guardar todos los temas
+	listaTemas *lista;
+	if((lista = (listaTemas*) malloc(sizeof(listaTemas))) == NULL){
+		fprintf(stderr, "Imposible crear la lista de temas.\n");
+		exit(-1);
+	}
+
+	//Abrir el fichero que se pasa como argumento
 	FILE *fichTemas;
 	if((fichTemas = fopen(argv[2], "r")) == NULL) {
 		fprintf(stderr, "El fichero de temas no se puede abrir \n");
+		free(lista);
+		exit(1);
+	}
+	//Añadir los temas del fichero a la lista
+	if (anyadirTemas(lista, fichTemas) != 0) {
+		fprintf(stderr, "No se han podido añadir los temas a la lista.\n");
+		free(lista);
 		exit(1);
 	}
 
-	printf("Antes de anyadirTemas\n");
+	
+	imprimirTemas(lista);   //Para pruebas, quitar esta línea al enviar
 
-	anyadirTemas(lista, fichTemas);
-	fclose(fichTemas);
 
-	printf("Después de anyadirTemas\n");
+	//Limpiar memoria
+	int z;
+	for(z=0; z < lista->nTemas; z++){
+		free(lista->temas[z]->nombre);
+		free(lista->temas[z]->suscriptores);
+		free(lista->temas[z]);
+	}
 
-	imprimir_temas(lista);
+	free(lista->temas);
+	free(lista);
 	return 0;
 }
