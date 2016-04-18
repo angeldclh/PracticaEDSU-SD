@@ -3,6 +3,11 @@
 #include <malloc.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+
+#include "comun.h"
+
 
 //Estructuras de datos para tema y lista de temas
 typedef struct tema {
@@ -18,6 +23,7 @@ typedef struct listaTemas {
 
 
 ////////////////////////////////////////////////////////////////////
+//Funciones empleadas en el desarrollo, no se emplean en el programa final
 
 void imprimirTema(const tema* tema) {
 	printf("tema.nombre =  %s\ttema.nSuscr = %d \n\n", tema->nombre, tema->nSuscr);
@@ -74,7 +80,7 @@ int anyadirTemas(listaTemas *lista, FILE *fichero){
 	void *tmp;
 
 	while ((read = 	getline(&line, &len, fichero)) != -1) {		
-		//Reservar memoria para incluir un nuevo tema en la lista. ESTE REALLOC ESTÁ MAL
+		//Reservar memoria para incluir un nuevo tema en la lista.
 		if((tmp = realloc(lista->temas, (lista->nTemas +1) * sizeof(tema*))) == NULL) {
 			fprintf(stderr, "Imposible reservar memoria para incluir nuevo tema en lista.\n");
 			fclose(fichero);
@@ -99,6 +105,19 @@ int anyadirTemas(listaTemas *lista, FILE *fichero){
 	return 0;
 }
 
+//Función para limpiar la memoria ocupada por una lista de temas
+void limpiarMemoria(listaTemas *lista){
+	int z;
+	for(z=0; z < lista->nTemas; z++){
+		free(lista->temas[z]->nombre);
+		free(lista->temas[z]->suscriptores);
+		free(lista->temas[z]);
+	}
+
+	free(lista->temas);
+	free(lista);
+}
+
 int main(int argc, char *argv[]) {
 	if (argc!=3) {
 		fprintf(stderr, "Uso: %s puerto fichero_temas\n", argv[0]);
@@ -109,7 +128,7 @@ int main(int argc, char *argv[]) {
 	listaTemas *lista;
 	if((lista = (listaTemas*) malloc(sizeof(listaTemas))) == NULL){
 		fprintf(stderr, "Imposible crear la lista de temas.\n");
-		exit(-1);
+		return 1;
 	}
 
 	//Abrir el fichero que se pasa como argumento
@@ -117,28 +136,49 @@ int main(int argc, char *argv[]) {
 	if((fichTemas = fopen(argv[2], "r")) == NULL) {
 		fprintf(stderr, "El fichero de temas no se puede abrir \n");
 		free(lista);
-		exit(1);
+		return 1;
 	}
 	//Añadir los temas del fichero a la lista
 	if (anyadirTemas(lista, fichTemas) != 0) {
 		fprintf(stderr, "No se han podido añadir los temas a la lista.\n");
 		free(lista);
-		exit(1);
+		return 1;
 	}
 
 	
-	imprimirTemas(lista);   //Para pruebas, quitar esta línea al enviar
+	//	imprimirTemas(lista);   //Para pruebas, quitar esta línea al enviar
+
+	//Crear socket TCP
+	struct sockaddr_in saTCP;
+	bzero((char *)&saTCP, sizeof(struct sockaddr_in));
+	saTCP.sin_family=AF_INET;
+	saTCP.sin_addr.s_addr=INADDR_ANY;
+	saTCP.sin_port=htons(atoi(argv[1]));
+
+	int sockTCP; //descriptror fichero socket TCP
+
+	if((sockTCP=socket(PF_INET,SOCK_STREAM,0)) == -1){
+		fprintf(stdout,"Error al crear el socket TCP del intermediario.\n");
+		limpiarMemoria(lista);
+		return 2;
+	}
+	//Reutilizar puerto
+	if (setsockopt(sockTCP, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int)) == -1){
+		fprintf(stderr,"Error en intermediario al reutilizar puerto.\n");
+		limpiarMemoria(lista);
+		return 2;
+	}
+	//Aceptar conexiones por el socket
+	if(listen(sockTCP, 1) == -1){
+		fprintf(stderr,"Error en el listen del intermediario.\n");
+		limpiarMemoria(lista);
+		return 2;
+	}
+
+	
 
 
 	//Limpiar memoria
-	int z;
-	for(z=0; z < lista->nTemas; z++){
-		free(lista->temas[z]->nombre);
-		free(lista->temas[z]->suscriptores);
-		free(lista->temas[z]);
-	}
-
-	free(lista->temas);
-	free(lista);
+	limpiarMemoria(lista);
 	return 0;
 }
