@@ -35,3 +35,6 @@
 intermediario/intermediario
 editor/editor
 suscriptor/suscriptor
+
+#Emacs backups
+\#*

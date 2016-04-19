@@ -176,6 +176,10 @@ int main(int argc, char *argv[]) {
 	}
 
 	
+	//Arrancar el servidor intermediario:
+	while(1){
+		
+	}
 
 
 	//Limpiar memoria
