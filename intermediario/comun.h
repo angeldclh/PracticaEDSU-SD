@@ -14,10 +14,10 @@
 tipo sea CONFIRM_OK o CONFIRM_ERR. valor sólo se usa cuando tipo es EVENTO */
 typedef struct mensaje {
 	int tipo;
-	char *nombreTema;
-	char *valor;
-	struct sockaddr_in destinatario;
+	const char *nombreTema;
+	const char *valor;
+	struct sockaddr_in *destinatario;
 } mensaje;
 
-int enviarMensaje(mensaje msg);
+int enviarMensaje(const mensaje *msg);
 	
