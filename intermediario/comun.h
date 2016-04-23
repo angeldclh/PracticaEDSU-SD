@@ -16,8 +16,11 @@ typedef struct mensaje {
 	int tipo;
 	const char *nombreTema;
 	const char *valor;
-	struct sockaddr_in *destinatario;
 } mensaje;
 
-int enviarMensaje(const mensaje *msg);
+char* serialize(mensaje *msg);
+
+mensaje* unserialize(char *serialmsg);
+
+int enviarMensaje(const mensaje *msg, const struct sockaddr_in *dir);
 	

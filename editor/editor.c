@@ -30,10 +30,11 @@ int generar_evento(const char *tema, const char *valor) {
 	msg->tipo = EVENTO;
 	msg->nombreTema = tema;
 	msg->valor = valor;
-	msg->destinatario = intermediario;
+
 
 	//Descomentar cuando la función esté escrita:
-	//int res = enviarMensaje(msg);
+	int res;
+	//res = enviarMensaje(msg,intermediario);
 	free(msg);
 	
 	return res;
