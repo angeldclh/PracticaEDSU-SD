@@ -33,8 +33,10 @@
 
 #Ejecutables
 intermediario/intermediario
-editor/editor
-suscriptor/suscriptor
+editor/test_editor
+editor/test_editor_avanz
+subscriptor/test_subscriptor
+subscriptor/test_subscriptor_avanz
 
 #Emacs backups
 \#*
