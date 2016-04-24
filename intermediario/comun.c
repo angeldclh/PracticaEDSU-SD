@@ -9,19 +9,33 @@
 #include <sys/types.h>   
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <string.h>
+#include <math.h>
 
 #include "comun.h"
 
-//Serializar mensaje para enviarlo por la red
-char* serialize(const mensaje *msg){
-	char *serialmsg;
+//Serializar mensaje para enviarlo por la red. El formato del string resultante será
+//tipo\nnombreTema\nvalor 
 
+char* serialize(mensaje *msg){
+	char *serialmsg;
+	//sizeof(char) porque tipo es 1, 2, 3, 4 o 5: solo va a ocupar 1 char
+	if((serialmsg = (char*) malloc(sizeof(char) + sizeof(msg->nombreTema) + sizeof(msg->valor))) == NULL){
+		fprintf(stderr, "Error al serializar mensaje.\n");
+		return NULL;
+	}
+
+	sprintf(serialmsg, "%d\n%s\n%s\n", htons(msg->tipo), msg->nombreTema, msg->valor);
+	return serialmsg;
 }
+
 
 //Dessearializar un mensaje (que se ha recibido)
 mensaje* unserialize(char *serialmsg){
 	mensaje *msg = (mensaje*) sizeof(mensaje);
-
+	msg->tipo = atoi(strsep(&serialmsg, "\n"));
+	msg->nombreTema = strsep(&serialmsg, "\n");
+	msg->valor = strsep(&serialmsg, "\n");
 
 	return msg;
 }

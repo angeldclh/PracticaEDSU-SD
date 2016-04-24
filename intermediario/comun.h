@@ -13,7 +13,7 @@
 /*Estructura de datos para mensajes. nombreTema puede ser NULL en caso de que
 tipo sea CONFIRM_OK o CONFIRM_ERR. valor sólo se usa cuando tipo es EVENTO */
 typedef struct mensaje {
-	int tipo;
+	unsigned int tipo;
 	const char *nombreTema;
 	const char *valor;
 } mensaje;

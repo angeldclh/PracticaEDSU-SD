@@ -184,5 +184,6 @@ int main(int argc, char *argv[]) {
 
 	//Limpiar memoria
 	limpiarMemoria(lista);
+
 	return 0;
 }
