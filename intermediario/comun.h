@@ -20,7 +20,7 @@ typedef struct mensaje {
 
 char* serialize(mensaje *msg);
 
-mensaje* unserialize(char *serialmsg);
+mensaje unserialize(char *serialmsg);
 
 int enviarMensaje(const mensaje *msg, const struct sockaddr_in *dir);
 	

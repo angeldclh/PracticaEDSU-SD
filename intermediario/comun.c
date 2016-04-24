@@ -10,17 +10,19 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
-#include <math.h>
 
 #include "comun.h"
 
-//Serializar mensaje para enviarlo por la red. El formato del string resultante será
-//tipo\nnombreTema\nvalor 
-
+/*Serializar mensaje para enviarlo por la red. El formato del string resultante será
+  tipo
+  nombreTema
+  valor
+*/ 
 char* serialize(mensaje *msg){
 	char *serialmsg;
-	//sizeof(char) porque tipo es 1, 2, 3, 4 o 5: solo va a ocupar 1 char
-	if((serialmsg = (char*) malloc(sizeof(char) + sizeof(msg->nombreTema) + sizeof(msg->valor))) == NULL){
+	//El 3 * sizeof(char) es por los 3 \n del mensaje serializado
+	if((serialmsg = (char*) malloc(sizeof(htons(msg->tipo)) + sizeof(msg->nombreTema) + sizeof(msg->valor)
+				       + 3 * sizeof(char))) == NULL){
 		fprintf(stderr, "Error al serializar mensaje.\n");
 		return NULL;
 	}
@@ -31,11 +33,11 @@ char* serialize(mensaje *msg){
 
 
 //Dessearializar un mensaje (que se ha recibido)
-mensaje* unserialize(char *serialmsg){
-	mensaje *msg = (mensaje*) sizeof(mensaje);
-	msg->tipo = atoi(strsep(&serialmsg, "\n"));
-	msg->nombreTema = strsep(&serialmsg, "\n");
-	msg->valor = strsep(&serialmsg, "\n");
+mensaje unserialize(char *serialmsg){
+	mensaje msg;
+	msg.tipo = ntohs(atoi(strsep(&serialmsg, "\n")));
+	msg.nombreTema = strsep(&serialmsg, "\n");
+	msg.valor = strsep(&serialmsg, "\n");
 
 	return msg;
 }

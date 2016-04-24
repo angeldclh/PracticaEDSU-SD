@@ -26,7 +26,7 @@ int generar_evento(const char *tema, const char *valor) {
 	intermediario->sin_addr = *(struct in_addr *) hostinfo->h_addr;
 	
 	//Crear el mensaje a enviar (usando la estructura de comun.h) y enviarlo
-	mensaje *msg = (mensaje*) malloc(sizeof(msg));
+	mensaje *msg = (mensaje*) malloc(sizeof(mensaje));
 	msg->tipo = EVENTO;
 	msg->nombreTema = tema;
 	msg->valor = valor;

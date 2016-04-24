@@ -177,13 +177,33 @@ int main(int argc, char *argv[]) {
 
 	
 	//Arrancar el servidor intermediario:
-	while(1){
+	/*	while(1){
 		
 	}
-
+	*/
 
 	//Limpiar memoria
 	limpiarMemoria(lista);
+	////////////////////////////////////////////
+	char *aux = "valorsdhsdufhuiahfiusahdfuihasduif";
+	mensaje *msg = (mensaje*) malloc(sizeof(mensaje));
+	msg->tipo = EVENTO;
+	msg->nombreTema = "temaftyftyfyfyftftfttftftftftfttftftftftftftftftftftftftftftftftftftftftfttftftftftftft";
+	msg->valor = aux;
+
+	aux = serialize(msg);
+	printf("%s", aux);
+
+	*msg = unserialize(aux); //Aquí peta (segmentation fault)
+	
+	printf("%d\n%s\n%s\n", msg->tipo, msg->nombreTema, msg->valor);
+	
+
+
+
+
+	//////////////////////////////////////////////
+
 
 	return 0;
 }
