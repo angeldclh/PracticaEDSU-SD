@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "comun.h"
 
@@ -57,7 +58,31 @@ int enviarMensaje(const mensaje *msg, const struct sockaddr_in *dir) {
 		close(s);
 		return -1;
 	}
-	
+
+	//Serializar y enviar mensaje
+	char *serialmsg = serialize((mensaje *) msg);
+	if((write(s, serialmsg, sizeof(serialmsg))) == -1) {
+		fprintf(stderr, "Error al enviar el siguiente mensaje:\n%s", serialmsg);
+		close(s);
+		free(serialmsg);  //El malloc se hace en serialize()
+		return -1;
+	}
+	free(serialmsg);  //El malloc se hace en serialize()
+
+	//Recibir la confirmación
+	char res[TAM_CONF];
+	if((read(s, res, TAM_CONF)) == -1) {
+		fprintf(stderr, "Error al recibir confirmación.\n");
+		close(s);
+		return -1;
+	}
+
+	mensaje resp = unserialize(res);
+	if (resp.tipo == CONFIRM_OK)
+		printf("CONFIRM_OK recibido\n"); 
+	else
+		fprintf(stderr, "CONFIRM_ERR recibido \n");
+
 	return 0;	
 }
 

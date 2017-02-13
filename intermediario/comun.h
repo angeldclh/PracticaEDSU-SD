@@ -9,6 +9,7 @@
 #define EVENTO 3
 #define CONFIRM_OK 4
 #define CONFIRM_ERR 5
+#define TAM_CONF sizeof(int)+3*sizeof(char)
 
 /*Estructura de datos para mensajes. nombreTema puede ser NULL en caso de que
 tipo sea CONFIRM_OK o CONFIRM_ERR. valor sólo se usa cuando tipo es EVENTO */
